@@ -40,6 +40,13 @@ namespace MineUtilTest
                 select a + b;
 
             Assert.True(option2.IsNone);
+
+            var result =
+             from a in Result<int, string>.Ok(88)
+             from b in Result<int, string>.Ok(2)
+             select a + b;
+
+            Assert.Equal(90, result.Unwrap());
         }
     }
 }
