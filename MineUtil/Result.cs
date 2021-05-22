@@ -81,6 +81,24 @@ namespace MineUtil
                 f(error);
             }
         }
+
+        public Result<U, E> CastOk<U>()
+        {
+            if (IsOk)
+            {
+                throw new InvalidOperationException("Resultの中身がOkの場合キャストできません");
+            }
+            return Result<U, E>.Error(error);
+        }
+
+        public Result<T, F> CastError<F>()
+        {
+            if (IsError)
+            {
+                throw new InvalidOperationException("Resultの中身がErrorの場合キャストできません");
+            }
+            return Result<T, F>.Ok(value);
+        }
     }
 
     public static class ResultExtentions
