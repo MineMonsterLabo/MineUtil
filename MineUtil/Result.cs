@@ -8,7 +8,7 @@ namespace MineUtil
         bool IsOk { get; }
 
         T RawValue { get; }
-        E RawValueError { get; }
+        E RawError { get; }
     }
 
     internal class Result<T, E> : IResult<T, E>
@@ -17,7 +17,7 @@ namespace MineUtil
         public bool IsOk => !IsError;
 
         public T RawValue => value;
-        public E RawValueError => error;
+        public E RawError => error;
 
         private T value;
         private E error;
@@ -51,17 +51,17 @@ namespace MineUtil
     {
         public static IResult<U, E> Bind<T, U, E>(this IResult<T, E> result, Func<T, IResult<U, E>> f)
         {
-            return result.IsError ? Result.Error<U, E>(result.RawValueError) : f(result.RawValue);
+            return result.IsError ? Result.Error<U, E>(result.RawError) : f(result.RawValue);
         }
 
         public static IResult<U, E> Select<T, U, E>(this IResult<T, E> result, Func<T, U> f)
         {
-            return result.IsError ? Result.Error<U, E>(result.RawValueError) : Result.Ok<U, E>(f(result.RawValue));
+            return result.IsError ? Result.Error<U, E>(result.RawError) : Result.Ok<U, E>(f(result.RawValue));
         }
 
         public static IResult<T, F> ErrorSelect<T, E, F>(this IResult<T, E> result, Func<E, F> f)
         {
-            return result.IsOk ? Result.Ok<T, F>(result.RawValue) : Result.Error<T, F>(f(result.RawValueError));
+            return result.IsOk ? Result.Ok<T, F>(result.RawValue) : Result.Error<T, F>(f(result.RawError));
         }
 
         public static IResult<V, E> SelectMany<T, U, V, E>(
@@ -87,7 +87,7 @@ namespace MineUtil
             {
                 throw new InvalidOperationException("Resultの中身がOkの値をUnwrapErrorしました");
             }
-            return result.RawValueError;
+            return result.RawError;
         }
 
         public static T UnwrapOr<T, E>(this IResult<T, E> result, T defaultValue)
@@ -97,7 +97,7 @@ namespace MineUtil
 
         public static E UnwrapErrorOr<T, E>(this IResult<T, E> result, E defaultError)
         {
-            return result.IsOk ? defaultError : result.RawValueError;
+            return result.IsOk ? defaultError : result.RawError;
         }
 
         public static IResult<T, E> Or<T, E>(this IResult<T, E> result, IResult<T, E> another)
@@ -122,7 +122,7 @@ namespace MineUtil
         {
             if (result.IsError)
             {
-                f(result.RawValueError);
+                f(result.RawError);
             }
         }
 
