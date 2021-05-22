@@ -126,15 +126,6 @@ namespace MineUtil
             }
         }
 
-        public static IResult<U, E> CastOk<T, U, E>(this IResult<T, E> result)
-        {
-            if (result.IsOk)
-            {
-                throw new InvalidOperationException("Resultの中身がOkの場合キャストできません");
-            }
-            return Result.Error<U, E>(result.RawValueError);
-        }
-
         public static IResult<T, F> CastError<T, E, F>(this IResult<T, E> result)
         {
             if (result.IsError)
