@@ -2,16 +2,11 @@
 
 namespace MineUtil
 {
-    public interface IOption<out T> : IOptionable<T>
+    public interface IOption<out T>
     {
         bool IsNone { get; }
         bool IsSome { get; }
         T RawValue { get; }
-    }
-
-    public interface IOptionable<out T>
-    {
-        IOption<T> GetOption();
     }
 
     internal class Option<T> : IOption<T>
@@ -29,11 +24,6 @@ namespace MineUtil
             this.value = value;
             IsNone = false;
         }
-
-        public IOption<T> GetOption()
-        {
-            return this;
-        }
     }
 
     public static class Option
@@ -47,66 +37,63 @@ namespace MineUtil
 
     public static class OptionExtentions
     {
-        public static bool IsNone<T>(this IOptionable<T> optionable) => optionable.GetOption().IsNone;
 
-        public static bool IsSome<T>(this IOptionable<T> optionable) => optionable.GetOption().IsSome;
-
-        public static T Unwrap<T>(this IOptionable<T> optionable)
+        public static T Unwrap<T>(this IOption<T> option)
         {
-            if (optionable.IsNone())
+            if (option.IsNone)
             {
                 throw new InvalidOperationException("Optionの中身がNoneの値をUnwrapしました");
             }
-            return optionable.GetOption().RawValue;
+            return option.RawValue;
         }
 
-        public static T UnwrapOr<T>(this IOptionable<T> optionable, T defaultValue)
+        public static T UnwrapOr<T>(this IOption<T> option, T defaultValue)
         {
-            return optionable.IsNone() ? defaultValue : optionable.GetOption().RawValue;
+            return option.IsNone ? defaultValue : option.RawValue;
         }
 
-        public static IOptionable<T> Or<T>(this IOptionable<T> optionable, IOptionable<T> another)
+        public static IOption<T> Or<T>(this IOption<T> option, IOption<T> another)
         {
-            return optionable.IsNone() ? another : optionable;
+            return option.IsNone ? another : option;
         }
 
-        public static IOptionable<T> Filter<T>(this IOptionable<T> optionable, Func<T, bool> predicate)
+        public static IOption<T> Filter<T>(this IOption<T> option, Func<T, bool> predicate)
         {
-            return optionable.IsNone() ? optionable : (predicate(optionable.GetOption().RawValue) ? optionable : Option.None<T>());
+            return option.IsNone ? option : (predicate(option.RawValue) ? option : Option.None<T>());
         }
 
-        public static void DoSome<T>(this IOptionable<T> optionable, Action<T> f)
+        public static void DoSome<T>(this IOption<T> option, Action<T> f)
         {
-            if (optionable.IsSome())
+            if (option.IsSome)
             {
-                f(optionable.GetOption().RawValue);
+                f(option.RawValue);
             }
         }
 
-        public static void DoNone<T>(this IOptionable<T> optionable, Action f)
+        public static void DoNone<T>(this IOption<T> option, Action f)
         {
-            if (optionable.IsNone())
+            if (option.IsNone)
             {
                 f();
             }
         }
 
-        public static IOptionable<U> Bind<T, U>(this IOptionable<T> optionable, Func<T, IOptionable<U>> f)
+        public static IOption<U> Bind<T, U>(this IOption<T> option, Func<T, IOption<U>> f)
         {
-            return optionable.IsNone() ? Option.None<U>() : f(optionable.GetOption().RawValue);
+            return option.IsNone ? Option.None<U>() : f(option.RawValue);
         }
 
-        public static IOptionable<U> Select<T, U>(this IOptionable<T> optionable, Func<T, U> f)
+        public static IOption<U> Select<T, U>(this IOption<T> option, Func<T, U> f)
         {
-            return optionable.IsNone() ? Option.None<U>() : Option.Some(f(optionable.GetOption().RawValue));
+            return option.IsNone ? Option.None<U>() : Option.Some(f(option.RawValue));
         }
 
-        public static IOptionable<V> SelectMany<T, U, V>(
-                      this IOptionable<T> optionable,
-                      Func<T, IOptionable<U>> selector,
+        public static IOption<V> SelectMany<T, U, V>(
+                      this IOption<T> option,
+                      Func<T, IOption<U>> selector,
                       Func<T, U, V> projector)
         {
-            return optionable.Bind(selector).Select(u => projector(optionable.GetOption().RawValue, u));
+            return option.Bind(selector).Select(u => projector(option.RawValue, u));
         }
 
         public static IOption<T> ToOption<T>(this T value)

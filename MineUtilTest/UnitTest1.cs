@@ -39,7 +39,7 @@ namespace MineUtilTest
                 from b in  Option.None<int>()
                 select a + b;
 
-            Assert.True(option2.IsNone());
+            Assert.True(option2.IsNone);
 
             var result =
              from a in Result.Ok<int, string>(88)
