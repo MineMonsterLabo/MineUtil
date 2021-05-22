@@ -41,6 +41,23 @@ namespace MineUtil
         {
             return IsNone ? this : (predicate(value) ? this : new Option<T>());
         }
+
+        public void DoSome(Action<T> f)
+        {
+            if (IsSome)
+            {
+                f(value);
+            }
+        }
+
+        public void DoNone(Action f)
+        {
+            if (IsNone)
+            {
+                f();
+            }
+        }
+
     }
 
     public static class OptionExtentions
