@@ -2,11 +2,18 @@
 
 namespace MineUtil
 {
-    public class Option<T>
+    public interface IOption<out T>
+    {
+        bool IsNone { get; }
+        bool IsSome { get; }
+        T RawValue { get; }
+    }
+
+    internal class Option<T> : IOption<T>
     {
         public bool IsNone { get; private set; } = true;
         public bool IsSome => !IsNone;
-        internal T RawValue => value;
+        public T RawValue => value;
 
         private T value;
 
@@ -17,72 +24,81 @@ namespace MineUtil
             this.value = value;
             IsNone = false;
         }
+    }
 
-        public T Unwrap()
+    public static class Option
+    {
+        public static IOption<T> None<T>()
+            => new Option<T>();
+
+        public static IOption<T> Some<T>(T value)
+            => new Option<T>(value);
+    }
+
+    public static class OptionExtentions
+    {
+
+        public static T Unwrap<T>(this IOption<T> option)
         {
-            if (IsNone)
+            if (option.IsNone)
             {
                 throw new InvalidOperationException("Optionの中身がNoneの値をUnwrapしました");
             }
-            return value;
+            return option.RawValue;
         }
 
-        public T UnwrapOr(T defaultValue)
+        public static T UnwrapOr<T>(this IOption<T> option, T defaultValue)
         {
-            return IsNone ? defaultValue : value;
+            return option.IsNone ? defaultValue : option.RawValue;
         }
 
-        public Option<T> Or(Option<T> another)
+        public static IOption<T> Or<T>(this IOption<T> option, IOption<T> another)
         {
-            return IsNone ? another : this;
+            return option.IsNone ? another : option;
         }
 
-        public Option<T> Filter(Func<T, bool> predicate)
+        public static IOption<T> Filter<T>(this IOption<T> option, Func<T, bool> predicate)
         {
-            return IsNone ? this : (predicate(value) ? this : new Option<T>());
+            return option.IsNone ? option : (predicate(option.RawValue) ? option : Option.None<T>());
         }
 
-        public void DoSome(Action<T> f)
+        public static void DoSome<T>(this IOption<T> option, Action<T> f)
         {
-            if (IsSome)
+            if (option.IsSome)
             {
-                f(value);
+                f(option.RawValue);
             }
         }
 
-        public void DoNone(Action f)
+        public static void DoNone<T>(this IOption<T> option, Action f)
         {
-            if (IsNone)
+            if (option.IsNone)
             {
                 f();
             }
         }
 
-    }
-
-    public static class OptionExtentions
-    {
-        public static Option<U> Bind<T,U>(this Option<T> option, Func<T, Option<U>> f)
+        public static IOption<U> Bind<T, U>(this IOption<T> option, Func<T, IOption<U>> f)
         {
-            return option.IsNone ? new Option<U>() : f(option.RawValue);
+            return option.IsNone ? Option.None<U>() : f(option.RawValue);
         }
 
-        public static Option<U> Select<T, U>(this Option<T> option, Func<T, U> f)
+        public static IOption<U> Select<T, U>(this IOption<T> option, Func<T, U> f)
         {
-            return option.IsNone ? new Option<U>() : new Option<U>(f(option.RawValue));
+            return option.IsNone ? Option.None<U>() : Option.Some(f(option.RawValue));
         }
 
-        public static Option<V> SelectMany<T, U, V>(
-                      this Option<T> option,
-                      Func<T, Option<U>> selector,
+        public static IOption<V> SelectMany<T, U, V>(
+                      this IOption<T> option,
+                      Func<T, IOption<U>> selector,
                       Func<T, U, V> projector)
         {
             return option.Bind(selector).Select(u => projector(option.RawValue, u));
         }
 
-        public static Option<T> ToOption<T>(this T value)
+        public static IOption<T> ToOption<T>(this T value)
         {
-            return value == null ? new Option<T>() : new Option<T>(value);
+            return value == null ? Option.None<T>() : Option.Some(value);
         }
     }
 }

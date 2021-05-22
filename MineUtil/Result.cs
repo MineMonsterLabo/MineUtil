@@ -2,128 +2,146 @@
 
 namespace MineUtil
 {
-    public class Result<T,E>
+    public interface IResult<out T, out E>
+    {
+        bool IsError { get; }
+        bool IsOk { get; }
+
+        T RawValue { get; }
+        E RawValueError { get; }
+    }
+
+    internal class Result<T, E> : IResult<T, E>
     {
         public bool IsError { get; private set; } = true;
-        public bool IsOk=> !IsError;
+        public bool IsOk => !IsError;
 
-        internal T RawValue => value;
-        internal E RawValueError => error;
+        public T RawValue => value;
+        public E RawValueError => error;
 
         private T value;
         private E error;
 
-        public static Result<T,E> Error(E error)
+        public static IResult<T, E> Error(E error)
         {
-            var result = new Result<T,E>();
+            var result = new Result<T, E>();
             result.error = error;
             return result;
         }
 
-        public static Result<T, E> Ok(T value)
+        public static IResult<T, E> Ok(T value)
         {
             var result = new Result<T, E>();
-            result.value= value;
+            result.value = value;
             result.IsError = false;
             return result;
         }
+    }
 
-        public T Unwrap()
-        {
-            if (IsError)
-            {
-                throw new InvalidOperationException("Resultの中身がErrorの値をUnwrapしました");
-            }
-            return value;
-        }
+    public static class Result
+    {
+        public static IResult<T, E> Error<T, E>(E error)
+        => Result<T, E>.Error(error);
 
-        public E UnwrapError()
-        {
-            if (IsOk)
-            {
-                throw new InvalidOperationException("Resultの中身がOkの値をUnwrapErrorしました");
-            }
-            return error;
-        }
-
-        public T UnwrapOr(T defaultValue)
-        {
-            return IsError ? defaultValue : value;
-        }
-
-        public E UnwrapErrorOr(E defaultError)
-        {
-            return IsOk ? defaultError : error;
-        }
-
-        public Result<T,E> Or(Result<T,E> another)
-        {
-            return IsError ? another : this;
-        }
-
-        public Option<T> ChangeOption()
-        {
-            return IsError ? new Option<T>() : value.ToOption();
-        }
-
-        public void DoOk(Action<T> f)
-        {
-            if (IsOk)
-            {
-                f(value);
-            }
-        }
-
-        public void DoError(Action<E> f)
-        {
-            if (IsError)
-            {
-                f(error);
-            }
-        }
-
-        public Result<U, E> CastOk<U>()
-        {
-            if (IsOk)
-            {
-                throw new InvalidOperationException("Resultの中身がOkの場合キャストできません");
-            }
-            return Result<U, E>.Error(error);
-        }
-
-        public Result<T, F> CastError<F>()
-        {
-            if (IsError)
-            {
-                throw new InvalidOperationException("Resultの中身がErrorの場合キャストできません");
-            }
-            return Result<T, F>.Ok(value);
-        }
+        public static IResult<T, E> Ok<T, E>(T value)
+        => Result<T, E>.Ok(value);
     }
 
     public static class ResultExtentions
     {
-        public static Result<U, E> Bind<T, U, E>(this Result<T, E> result, Func<T, Result<U, E>> f)
+        public static IResult<U, E> Bind<T, U, E>(this IResult<T, E> result, Func<T, IResult<U, E>> f)
         {
-            return result.IsError ? Result<U, E>.Error(result.RawValueError) : f(result.RawValue);
+            return result.IsError ? Result.Error<U, E>(result.RawValueError) : f(result.RawValue);
         }
 
-        public static Result<U,E> Select<T, U,E>(this Result<T,E> result, Func<T, U> f)
+        public static IResult<U, E> Select<T, U, E>(this IResult<T, E> result, Func<T, U> f)
         {
-            return result.IsError ? Result<U,E>.Error(result.RawValueError) : Result<U,E>.Ok(f(result.RawValue));
+            return result.IsError ? Result.Error<U, E>(result.RawValueError) : Result.Ok<U, E>(f(result.RawValue));
         }
 
-        public static Result<T, F> ErrorSelect<T, E, F>(this Result<T, E> result, Func<E, F> f)
+        public static IResult<T, F> ErrorSelect<T, E, F>(this IResult<T, E> result, Func<E, F> f)
         {
-            return result.IsOk ? Result<T, F>.Ok(result.RawValue) : Result<T, F>.Error(f(result.RawValueError));
+            return result.IsOk ? Result.Ok<T, F>(result.RawValue) : Result.Error<T, F>(f(result.RawValueError));
         }
 
-        public static Result<V,E> SelectMany<T, U, V,E>(
-                      this Result<T,E> result,
-                      Func<T, Result<U,E>> selector,
+        public static IResult<V, E> SelectMany<T, U, V, E>(
+                      this IResult<T, E> result,
+                      Func<T, IResult<U, E>> selector,
                       Func<T, U, V> projector)
         {
             return result.Bind(selector).Select(u => projector(result.RawValue, u));
+        }
+
+        public static T Unwrap<T, E>(this IResult<T, E> result)
+        {
+            if (result.IsError)
+            {
+                throw new InvalidOperationException("Resultの中身がErrorの値をUnwrapしました");
+            }
+            return result.RawValue;
+        }
+
+        public static E UnwrapError<T, E>(this IResult<T, E> result)
+        {
+            if (result.IsOk)
+            {
+                throw new InvalidOperationException("Resultの中身がOkの値をUnwrapErrorしました");
+            }
+            return result.RawValueError;
+        }
+
+        public static T UnwrapOr<T, E>(this IResult<T, E> result, T defaultValue)
+        {
+            return result.IsError ? defaultValue : result.RawValue;
+        }
+
+        public static E UnwrapErrorOr<T, E>(this IResult<T, E> result, E defaultError)
+        {
+            return result.IsOk ? defaultError : result.RawValueError;
+        }
+
+        public static IResult<T, E> Or<T, E>(this IResult<T, E> result, IResult<T, E> another)
+        {
+            return result.IsError ? another : result;
+        }
+
+        public static IOption<T> ChangeOption<T, E>(this IResult<T, E> result)
+        {
+            return result.IsError ? Option.None<T>() : result.RawValue.ToOption();
+        }
+
+        public static void DoOk<T, E>(this IResult<T, E> result, Action<T> f)
+        {
+            if (result.IsOk)
+            {
+                f(result.RawValue);
+            }
+        }
+
+        public static void DoError<T, E>(this IResult<T, E> result, Action<E> f)
+        {
+            if (result.IsError)
+            {
+                f(result.RawValueError);
+            }
+        }
+
+        public static IResult<U, E> CastOk<T, U, E>(this IResult<T, E> result)
+        {
+            if (result.IsOk)
+            {
+                throw new InvalidOperationException("Resultの中身がOkの場合キャストできません");
+            }
+            return Result.Error<U, E>(result.RawValueError);
+        }
+
+        public static IResult<T, F> CastError<T, E, F>(this IResult<T, E> result)
+        {
+            if (result.IsError)
+            {
+                throw new InvalidOperationException("Resultの中身がErrorの場合キャストできません");
+            }
+            return Result.Ok<T, F>(result.RawValue);
         }
     }
 }

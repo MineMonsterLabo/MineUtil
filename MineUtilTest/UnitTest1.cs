@@ -13,7 +13,7 @@ namespace MineUtilTest
         [Fact]
         public void Test1()
         {
-            Assert.Equal(5.ToOption().Unwrap(), new Option<int>(5).Unwrap());
+            Assert.Equal(5.ToOption().Unwrap(),  Option.Some(5).Unwrap());
 
             TestData testData = null;
 
@@ -36,14 +36,14 @@ namespace MineUtilTest
 
             var option2 =
                 from a in 88.ToOption()
-                from b in new Option<int>()
+                from b in  Option.None<int>()
                 select a + b;
 
             Assert.True(option2.IsNone);
 
             var result =
-             from a in Result<int, string>.Ok(88)
-             from b in Result<int, string>.Ok(2)
+             from a in Result.Ok<int, string>(88)
+             from b in Result.Ok<int, string>(2)
              select a + b;
 
             Assert.Equal(90, result.Unwrap());
