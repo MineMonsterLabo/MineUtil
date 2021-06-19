@@ -69,7 +69,7 @@ namespace MineUtil
                       Func<T, IResult<U, E>> selector,
                       Func<T, U, V> projector)
         {
-            return result.Bind(selector).Select(u => projector(result.RawValue, u));
+            return result.Bind(selector).Select(projector.Curry()(result.RawValue));
         }
 
         public static T Unwrap<T, E>(this IResult<T, E> result)
@@ -103,6 +103,11 @@ namespace MineUtil
         public static IResult<T, E> Or<T, E>(this IResult<T, E> result, IResult<T, E> another)
         {
             return result.IsError ? another : result;
+        }
+
+        public static IResult<T, E> Flatten<T, E>(this IResult<IResult<T, E>,E> result)
+        {
+            return result.Bind(Functional.Id);
         }
 
         public static IOption<T> ChangeOption<T, E>(this IResult<T, E> result)

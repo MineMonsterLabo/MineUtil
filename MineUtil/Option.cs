@@ -62,6 +62,11 @@ namespace MineUtil
             return option.IsNone ? option : (predicate(option.RawValue) ? option : Option.None<T>());
         }
 
+        public static IOption<T> Flatten<T, E>(this IOption<IOption<T>> option)
+        {
+            return option.Bind(Functional.Id);
+        }
+
         public static void DoSome<T>(this IOption<T> option, Action<T> f)
         {
             if (option.IsSome)
@@ -93,7 +98,7 @@ namespace MineUtil
                       Func<T, IOption<U>> selector,
                       Func<T, U, V> projector)
         {
-            return option.Bind(selector).Select(u => projector(option.RawValue, u));
+            return option.Bind(selector).Select(projector.Curry()(option.RawValue));
         }
 
         public static IOption<T> ToOption<T>(this T value)
