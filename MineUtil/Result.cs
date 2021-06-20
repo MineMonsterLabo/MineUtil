@@ -105,7 +105,7 @@ namespace MineUtil
             return result.IsError ? another : result;
         }
 
-        public static IResult<T, E> Flatten<T, E>(this IResult<IResult<T, E>,E> result)
+        public static IResult<T, E> Flatten<T, E>(this IResult<IResult<T, E>, E> result)
         {
             return result.Bind(Functional.Id);
         }
@@ -113,6 +113,18 @@ namespace MineUtil
         public static IOption<T> ChangeOption<T, E>(this IResult<T, E> result)
         {
             return result.IsError ? Option.None<T>() : result.RawValue.ToOption();
+        }
+
+        public static void Do<T, E>(this IResult<T, E> result, Action<T> okF, Action<E> errorF)
+        {
+            if (result.IsOk)
+            {
+                okF(result.RawValue);
+            }
+            else if (result.IsError)
+            {
+                errorF(result.RawError);
+            }
         }
 
         public static void DoOk<T, E>(this IResult<T, E> result, Action<T> f)
