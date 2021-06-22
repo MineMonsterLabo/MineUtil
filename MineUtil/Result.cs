@@ -121,7 +121,7 @@ namespace MineUtil
             {
                 okF(result.RawValue);
             }
-            else if (result.IsError)
+            else
             {
                 errorF(result.RawError);
             }
