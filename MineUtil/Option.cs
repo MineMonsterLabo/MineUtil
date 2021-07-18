@@ -17,7 +17,9 @@ namespace MineUtil
 
         private T value;
 
-        public Option() { }
+        public Option()
+        {
+        }
 
         public Option(T value)
         {
@@ -29,21 +31,21 @@ namespace MineUtil
     public static class Option
     {
         public static IOption<T> None<T>()
-            => new Option<T>();
+        {
+            return new Option<T>();
+        }
 
         public static IOption<T> Some<T>(T value)
-            => new Option<T>(value);
+        {
+            return new Option<T>(value);
+        }
     }
 
     public static class OptionExtentions
     {
-
         public static T Unwrap<T>(this IOption<T> option)
         {
-            if (option.IsNone)
-            {
-                throw new InvalidOperationException("Optionの中身がNoneの値をUnwrapしました");
-            }
+            if (option.IsNone) throw new InvalidOperationException("Optionの中身がNoneの値をUnwrapしました");
             return option.RawValue;
         }
 
@@ -59,7 +61,7 @@ namespace MineUtil
 
         public static IOption<T> Filter<T>(this IOption<T> option, Func<T, bool> predicate)
         {
-            return option.IsNone ? option : (predicate(option.RawValue) ? option : Option.None<T>());
+            return option.IsNone ? option : predicate(option.RawValue) ? option : Option.None<T>();
         }
 
         public static IOption<T> Flatten<T, E>(this IOption<IOption<T>> option)
@@ -69,18 +71,12 @@ namespace MineUtil
 
         public static void DoSome<T>(this IOption<T> option, Action<T> f)
         {
-            if (option.IsSome)
-            {
-                f(option.RawValue);
-            }
+            if (option.IsSome) f(option.RawValue);
         }
 
         public static void DoNone<T>(this IOption<T> option, Action f)
         {
-            if (option.IsNone)
-            {
-                f();
-            }
+            if (option.IsNone) f();
         }
 
         public static IOption<U> Bind<T, U>(this IOption<T> option, Func<T, IOption<U>> f)
@@ -94,9 +90,9 @@ namespace MineUtil
         }
 
         public static IOption<V> SelectMany<T, U, V>(
-                      this IOption<T> option,
-                      Func<T, IOption<U>> selector,
-                      Func<T, U, V> projector)
+            this IOption<T> option,
+            Func<T, IOption<U>> selector,
+            Func<T, U, V> projector)
         {
             return option.Bind(selector).Select(projector.Curry()(option.RawValue));
         }

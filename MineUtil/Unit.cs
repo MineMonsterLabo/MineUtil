@@ -6,19 +6,40 @@ namespace MineUtil
     {
         private static readonly Unit _value = new Unit();
         public static ref readonly Unit Value => ref _value;
-      
-        public int CompareTo(Unit other) => 0;
 
-        int IComparable.CompareTo(object obj) => 0;
-        
-        public override int GetHashCode() => 0;
+        public int CompareTo(Unit other)
+        {
+            return 0;
+        }
 
-        public bool Equals(Unit other) => true;
+        int IComparable.CompareTo(object obj)
+        {
+            return 0;
+        }
 
-        public override bool Equals(object obj) => obj is Unit;
+        public override int GetHashCode()
+        {
+            return 0;
+        }
 
-        public static bool operator ==(Unit first, Unit second) => true;
+        public bool Equals(Unit other)
+        {
+            return true;
+        }
 
-        public static bool operator !=(Unit first, Unit second) => false;
+        public override bool Equals(object obj)
+        {
+            return obj is Unit;
+        }
+
+        public static bool operator ==(Unit first, Unit second)
+        {
+            return true;
+        }
+
+        public static bool operator !=(Unit first, Unit second)
+        {
+            return false;
+        }
     }
 }

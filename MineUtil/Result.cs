@@ -41,10 +41,14 @@ namespace MineUtil
     public static class Result
     {
         public static IResult<T, E> Error<T, E>(E error)
-        => Result<T, E>.Error(error);
+        {
+            return Result<T, E>.Error(error);
+        }
 
         public static IResult<T, E> Ok<T, E>(T value)
-        => Result<T, E>.Ok(value);
+        {
+            return Result<T, E>.Ok(value);
+        }
     }
 
     public static class ResultExtentions
@@ -65,28 +69,22 @@ namespace MineUtil
         }
 
         public static IResult<V, E> SelectMany<T, U, V, E>(
-                      this IResult<T, E> result,
-                      Func<T, IResult<U, E>> selector,
-                      Func<T, U, V> projector)
+            this IResult<T, E> result,
+            Func<T, IResult<U, E>> selector,
+            Func<T, U, V> projector)
         {
             return result.Bind(selector).Select(projector.Curry()(result.RawValue));
         }
 
         public static T Unwrap<T, E>(this IResult<T, E> result)
         {
-            if (result.IsError)
-            {
-                throw new InvalidOperationException("Resultの中身がErrorの値をUnwrapしました");
-            }
+            if (result.IsError) throw new InvalidOperationException("Resultの中身がErrorの値をUnwrapしました");
             return result.RawValue;
         }
 
         public static E UnwrapError<T, E>(this IResult<T, E> result)
         {
-            if (result.IsOk)
-            {
-                throw new InvalidOperationException("Resultの中身がOkの値をUnwrapErrorしました");
-            }
+            if (result.IsOk) throw new InvalidOperationException("Resultの中身がOkの値をUnwrapErrorしました");
             return result.RawError;
         }
 
@@ -118,37 +116,24 @@ namespace MineUtil
         public static void Do<T, E>(this IResult<T, E> result, Action<T> okF, Action<E> errorF)
         {
             if (result.IsOk)
-            {
                 okF(result.RawValue);
-            }
             else
-            {
                 errorF(result.RawError);
-            }
         }
 
         public static void DoOk<T, E>(this IResult<T, E> result, Action<T> f)
         {
-            if (result.IsOk)
-            {
-                f(result.RawValue);
-            }
+            if (result.IsOk) f(result.RawValue);
         }
 
         public static void DoError<T, E>(this IResult<T, E> result, Action<E> f)
         {
-            if (result.IsError)
-            {
-                f(result.RawError);
-            }
+            if (result.IsError) f(result.RawError);
         }
 
         public static IResult<T, F> CastError<T, E, F>(this IResult<T, E> result)
         {
-            if (result.IsError)
-            {
-                throw new InvalidOperationException("Resultの中身がErrorの場合キャストできません");
-            }
+            if (result.IsError) throw new InvalidOperationException("Resultの中身がErrorの場合キャストできません");
             return Result.Ok<T, F>(result.RawValue);
         }
     }
