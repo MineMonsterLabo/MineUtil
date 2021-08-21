@@ -4,6 +4,7 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,8 +14,9 @@
     </PackageReference>
   </ItemGroup>
 
-  <Target Name="Change Version" AfterTargets="GitInfo" DependsOnTargets="GitInfo">
+  <Target Name="ChangeVersion" BeforeTargets="Build" DependsOnTargets="GitInfo">
     <PropertyGroup>
+      <Version>$(GitBaseVersionMajor).$(GitSemVerMinor).$(GitSemVerPatch)</Version>
       <PackageVersion>$(GitBaseVersionMajor).$(GitSemVerMinor).$(GitSemVerPatch)-alpha</PackageVersion>
     </PropertyGroup>
   </Target>
